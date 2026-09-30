@@ -5,9 +5,9 @@
     "optional": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "既殊",
-    "version": "1.0.0",
-    "homePage": "https://github.com/jishu825/SillyTavern-Chat-Stylist",
+    "author": "既殊, X00LA",
+    "version": "1.1.0",
+    "homePage": "https://github.com/X00LA/SillyTavern-Chat-Stylist",
     "auto_update": true,
     "type": "normal"
 }
