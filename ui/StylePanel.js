@@ -22,41 +22,41 @@ export class StylePanel {
     createElement() {
         const panel = DOMUtils.createElement("div", "chat-stylist-editor");
 
-        // 添加标题栏
+        // Add title bar
         const header = this.createHeader();
         panel.appendChild(header);
 
-        // 添加标签页控制器
+        // Add tab controller
         this.tabControl = new TabControl({
             tabs: [
-                { id: "bubble", label: "气泡样式", icon: "fa-solid fa-message" },
-                { id: "text", label: "文本样式", icon: "fa-solid fa-font" },
+                { id: "bubble", label: "Bubble Style", icon: "fa-solid fa-message" },
+                { id: "text", label: "Text Style", icon: "fa-solid fa-font" },
             ],
             onTabChanged: (tabId) => this.handleTabChange(tabId),
         });
         panel.appendChild(this.tabControl.createElement());
 
-        // 创建气泡样式面板
+        // Create bubble style panel
         this.bubblePanel = new BubblePanel({
             initialStyle: this.currentStyle.bubble,
             onChange: (change) => this.handleStyleChange("bubble", change),
         });
 
-        // 创建文本样式面板
+        // Create text style panel
         this.textPanel = new TextPanel({
             initialStyle: this.currentStyle.text,
             onChange: (change) => this.handleStyleChange("text", change),
         });
 
-        // 添加面板内容
+        // Add panel content
         this.tabControl.setTabContent("bubble", this.bubblePanel.createElement());
         this.tabControl.setTabContent("text", this.textPanel.createElement());
 
-        // 添加底部预览和按钮
+        // Add footer preview and buttons
         const footer = this.createFooter();
         panel.appendChild(footer);
 
-        // 添加拖拽和缩放功能
+        // Add drag and resize functionality
         this.makeDraggable(panel, header);
         panel.style.resize = "both";
 
@@ -67,19 +67,19 @@ export class StylePanel {
     createHeader() {
         const header = DOMUtils.createElement("div", "editor-header");
         const title = DOMUtils.createElement("span", "editor-title");
-        title.textContent = "样式设置面板";
+        title.textContent = "Style Settings Panel";
 
         const buttonContainer = DOMUtils.createElement("div", "editor-buttons");
 
-        // 顶部按钮
+        // Top buttons
         const saveButton = DOMUtils.createButton("", this.handleSave.bind(this), "action-button save");
-        saveButton.innerHTML = `<i class="fa-solid fa-save"></i> 保存`;
+        saveButton.innerHTML = `<i class="fa-solid fa-save"></i> Save`;
         const resetButton = DOMUtils.createButton("", this.reset.bind(this), "action-button reset");
-        resetButton.innerHTML = `<i class="fa-solid fa-rotate-left"></i> 重置`;
+        resetButton.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset`;
         const minimizeButton = DOMUtils.createButton("", this.handleMinimize.bind(this), "action-button minimize");
-        minimizeButton.innerHTML = `<i class="fa-solid fa-window-minimize"></i> 最小化`;
+        minimizeButton.innerHTML = `<i class="fa-solid fa-window-minimize"></i> Minimize`;
         const closeButton = DOMUtils.createButton("", this.handleClose.bind(this), "action-button close");
-        closeButton.innerHTML = `<i class="fa-solid fa-times"></i> 关闭`;
+        closeButton.innerHTML = `<i class="fa-solid fa-times"></i> Close`;
 
         buttonContainer.append(saveButton, resetButton, minimizeButton, closeButton);
         header.append(title, buttonContainer);
@@ -94,9 +94,9 @@ export class StylePanel {
         preview.innerHTML = `
             <div class="preview-message">
                 <div class="preview-bubble">
-                    这是预览文本
-                    <em>这是斜体文本</em>
-                    <q>这是引用文本</q>
+                    This is preview text
+                    <em>This is italic text</em>
+                    <q>This is quoted text</q>
                 </div>
             </div>
         `;
@@ -174,14 +174,14 @@ export class StylePanel {
         const previewBubble = this.element.querySelector(".preview-bubble");
         if (!previewBubble) return;
 
-        // 更新样式预览
+        // Update preview styles
         const { bubble, text } = this.currentStyle;
 
         if (bubble.background.type === "solid") {
             previewBubble.style.backgroundColor = bubble.background.color;
             previewBubble.style.opacity = bubble.background.opacity;
         } else {
-            // TODO: 更新渐变预览
+            // TODO: update gradient preview
         }
 
         previewBubble.style.color = text.mainColor;
