@@ -1,4 +1,4 @@
-// 检查必要依赖
+// Check required dependencies
 if (typeof jQuery === 'undefined') {
     console.error('Chat Stylist: jQuery is required but not loaded');
     throw new Error('jQuery is required for Chat Stylist extension');
@@ -22,7 +22,7 @@ class ChatStylist {
             this.settings = this.initSettings();
             this.styleManager = this.initStyleManager();
             
-            // 直接初始化UI
+            // Initialize UI directly
             this.initialize();
             console.debug('ChatStylist: Initialized successfully');
         } catch (error) {
@@ -75,16 +75,16 @@ addSettingsUI() {
                     <div class="chat-stylist-controls">
                         <button id="chat-stylist-editor" class="menu_button">
                             <i class="fa-solid fa-palette"></i>
-                            <span>样式编辑器</span>
+                            <span>Style Editor</span>
                         </button>
                         <div class="flex-container">
-                            <button id="chat-stylist-import" class="menu_button" title="导入样式">
+                            <button id="chat-stylist-import" class="menu_button" title="Import styles">
                                 <i class="fa-solid fa-file-import"></i>
                             </button>
-                            <button id="chat-stylist-export" class="menu_button" title="导出样式">
+                            <button id="chat-stylist-export" class="menu_button" title="Export styles">
                                 <i class="fa-solid fa-file-export"></i>
                             </button>
-                            <button id="chat-stylist-reset" class="menu_button" title="重置样式">
+                            <button id="chat-stylist-reset" class="menu_button" title="Reset styles">
                                 <i class="fa-solid fa-rotate-left"></i>
                             </button>
                         </div>
@@ -93,19 +93,19 @@ addSettingsUI() {
             </div>
         </div>`;
     
-    // 将扩展设置添加到页面的设置区域
+    // Append the extension settings to the page's settings area
     $('#extensions_settings2').append(settingsHtml);
 
-    // 绑定悬浮面板的事件
+    // Bind floating panel events
     $('#chat-stylist-editor').on('click', () => {
-        this.showStyleEditor(); // 点击时显示面板
+        this.showStyleEditor(); // show panel on click
     });
 
-    // 导入、导出、重置等其他功能
+    // Import, export, reset actions
     $('#chat-stylist-import').on('click', () => this.importStyles());
     $('#chat-stylist-export').on('click', () => this.exportStyles());
     $('#chat-stylist-reset').on('click', () => {
-        if (confirm('确定要重置所有样式设置吗？')) {
+        if (confirm('Are you sure you want to reset all style settings?')) {
             this.resetStyles();
         }
     });
@@ -125,7 +125,7 @@ addSettingsUI() {
         });
 
         $('#chat-stylist-reset').on('click', () => {
-            if (confirm('确定要重置所有样式设置吗？')) {
+            if (confirm('Are you sure you want to reset all style settings?')) {
                 this.resetStyles();
             }
         });
@@ -158,7 +158,7 @@ addSettingsUI() {
             console.error('ChatStylist: eventSource not available after 20 seconds');
         };
 
-        // 延迟2秒后开始等待
+        // Start waiting after 2 seconds
         setTimeout(() => {
             waitForEventSource();
         }, 2000);
@@ -169,7 +169,7 @@ addSettingsUI() {
             if (!this.settings.enabled) return;
 
             let styles = '';
-            // 应用样式逻辑
+            // apply styles logic
             if (this.styleManager && this.styleManager.textContent !== undefined) {
                 this.styleManager.textContent = styles;
             }
@@ -190,13 +190,13 @@ addSettingsUI() {
     }
 
     /**
- * 使面板可拖动
+ * Make the panel draggable
  */
 makeDraggable(element, dragHandle) {
     let isDragging = false;
     let startX, startY, initialX, initialY;
 
-    dragHandle.style.cursor = 'move'; // 设置鼠标样式
+    dragHandle.style.cursor = 'move'; // set mouse cursor
 
     dragHandle.addEventListener('mousedown', (event) => {
         isDragging = true;
@@ -205,7 +205,7 @@ makeDraggable(element, dragHandle) {
         const rect = element.getBoundingClientRect();
         initialX = rect.left;
         initialY = rect.top;
-        document.body.style.userSelect = 'none'; // 禁止文本选择
+        document.body.style.userSelect = 'none'; // disable text selection
     });
 
     document.addEventListener('mousemove', (event) => {
@@ -214,19 +214,19 @@ makeDraggable(element, dragHandle) {
         const deltaY = event.clientY - startY;
         element.style.left = `${initialX + deltaX}px`;
         element.style.top = `${initialY + deltaY}px`;
-        element.style.transform = 'none'; // 移动后取消初始居中
+        element.style.transform = 'none'; // remove initial centering after moving
     });
 
     document.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
-            document.body.style.userSelect = ''; // 恢复文本选择
+            document.body.style.userSelect = ''; // restore text selection
         }
     });
 }
 
-    /**
- * 使面板可缩放
+/**
+ * Make the panel resizable
  */
 makeResizable(element, resizeHandle) {
     let isResizing = false;
@@ -238,7 +238,7 @@ makeResizable(element, resizeHandle) {
         startHeight = element.offsetHeight;
         startX = event.clientX;
         startY = event.clientY;
-        document.body.style.userSelect = 'none'; // 禁止文本选择
+        document.body.style.userSelect = 'none'; // disable text selection
     });
 
     document.addEventListener('mousemove', (event) => {
@@ -252,7 +252,7 @@ makeResizable(element, resizeHandle) {
     document.addEventListener('mouseup', () => {
         if (isResizing) {
             isResizing = false;
-            document.body.style.userSelect = ''; // 恢复文本选择
+            document.body.style.userSelect = ''; // restore text selection
         }
     });
 }
@@ -274,7 +274,7 @@ makeResizable(element, resizeHandle) {
     }
 }
 
-// 初始化扩展
+// Initialize the extension
 jQuery(async () => {
     try {
         window.chatStylist = new ChatStylist();
