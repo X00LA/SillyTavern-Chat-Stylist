@@ -1,185 +1,202 @@
-import { ColorUtils } from "../utils/ColorUtils.js";
-import { StyleConfig } from "../models/StyleConfig.js";
-import { EventTypes } from "./EventManager.js";
+import { TabControl } from "./components/TabControl.js";
+import { BubblePanel } from "./panels/BubblePanel.js";
+import { TextPanel } from "./panels/TextPanel.js";
+import { DOMUtils } from "../utils/DOMUtils.js";
 
-export class StyleManager {
-    constructor(settings, eventManager) {
-        this.settings = settings;
-        this.eventManager = eventManager;
-        
-        // 缓存样式实例
-        this.styleCache = new Map();
-        
-        this.initializeEvents();
+export class StylePanel {
+    constructor(options = {}) {
+        this.options = {
+            onSave: options.onSave || null,
+            onReset: options.onReset || null,
+            onClose: options.onClose || null,
+            initialStyle: options.initialStyle || null,
+        };
+
+        this.element = null;
+        this.tabControl = null;
+        this.bubblePanel = null;
+        this.textPanel = null;
+        this.currentStyle = structuredClone(this.options.initialStyle) || {};
     }
 
-    initializeEvents() {
-        this.eventManager.on(EventTypes.STYLE_CHANGED, (data) => {
-            this.applyStyle(data.target, data.style);
+    createElement() {
+        const panel = DOMUtils.createElement("div", "chat-stylist-editor");
+
+        // Add title bar
+        const header = this.createHeader();
+        panel.appendChild(header);
+
+        // Add tab controller
+        this.tabControl = new TabControl({
+            tabs: [
+                { id: "bubble", label: "Bubble Style", icon: "fa-solid fa-message" },
+                { id: "text", label: "Text Style", icon: "fa-solid fa-font" },
+            ],
+            onTabChanged: (tabId) => this.handleTabChange(tabId),
+        });
+        panel.appendChild(this.tabControl.createElement());
+
+        // Create bubble style panel
+        this.bubblePanel = new BubblePanel({
+            initialStyle: this.currentStyle.bubble,
+            onChange: (change) => this.handleStyleChange("bubble", change),
         });
 
-        this.eventManager.on(EventTypes.STYLE_RESET, () => {
-            this.resetStyles();
+        // Create text style panel
+        this.textPanel = new TextPanel({
+            initialStyle: this.currentStyle.text,
+            onChange: (change) => this.handleStyleChange("text", change),
         });
+
+        // Add panel content
+        this.tabControl.setTabContent("bubble", this.bubblePanel.createElement());
+        this.tabControl.setTabContent("text", this.textPanel.createElement());
+
+        // Add footer preview and buttons
+        const footer = this.createFooter();
+        panel.appendChild(footer);
+
+        // Add drag and resize functionality
+        this.makeDraggable(panel, header);
+        panel.style.resize = "both";
+
+        this.element = panel;
+        return panel;
     }
 
-    getStyleForMessage(messageElement) {
-        const isUser = messageElement.getAttribute('is_user') === 'true';
-        const isSystem = messageElement.getAttribute('is_system') === 'true';
-        const characterId = messageElement.getAttribute('chid');
+    createHeader() {
+        const header = DOMUtils.createElement("div", "editor-header");
+        const title = DOMUtils.createElement("span", "editor-title");
+        title.textContent = "Style Settings Panel";
 
-        let style;
-        if (isUser) {
-            style = this.settings.getUserStyle();
-        } else if (isSystem) {
-            style = this.settings.getSystemStyle();
-        } else {
-            style = this.settings.getCharacterStyle(characterId);
-        }
+        const buttonContainer = DOMUtils.createElement("div", "editor-buttons");
 
-        return style;
+        // Top buttons
+        const saveButton = DOMUtils.createButton("", this.handleSave.bind(this), "action-button save");
+        saveButton.innerHTML = `<i class="fa-solid fa-save"></i> Save`;
+        const resetButton = DOMUtils.createButton("", this.reset.bind(this), "action-button reset");
+        resetButton.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Reset`;
+        const minimizeButton = DOMUtils.createButton("", this.handleMinimize.bind(this), "action-button minimize");
+        minimizeButton.innerHTML = `<i class="fa-solid fa-window-minimize"></i> Minimize`;
+        const closeButton = DOMUtils.createButton("", this.handleClose.bind(this), "action-button close");
+        closeButton.innerHTML = `<i class="fa-solid fa-times"></i> Close`;
+
+        buttonContainer.append(saveButton, resetButton, minimizeButton, closeButton);
+        header.append(title, buttonContainer);
+
+        return header;
     }
 
-    applyStyleToMessage(messageElement, styleConfig) {
-        const mesBlock = messageElement.querySelector('.mes_block');
-        const mesText = messageElement.querySelector('.mes_text');
-        
-        if (!mesBlock || !mesText) return;
+    createFooter() {
+        const footer = DOMUtils.createElement("div", "editor-footer");
 
-        // 应用气泡样式
-        const bubble = styleConfig.bubble.data;
-        
-        // 背景样式
-        if (bubble.background.type === 'solid') {
-            mesBlock.style.background = ColorUtils.hexToRgba(
-                bubble.background.color,
-                bubble.background.opacity
-            );
-        } else {
-            mesBlock.style.background = ColorUtils.createGradient(
-                bubble.background.gradient.type,
-                bubble.background.gradient.colors,
-                bubble.background.gradient.positions,
-                bubble.background.gradient.angle
-            );
-        }
+        const preview = DOMUtils.createElement("div", "style-preview");
+        preview.innerHTML = `
+            <div class="preview-message">
+                <div class="preview-bubble">
+                    This is preview text
+                    <em>This is italic text</em>
+                    <q>This is quoted text</q>
+                </div>
+            </div>
+        `;
 
-        // 边框样式
-        mesBlock.style.border = `${bubble.border.width}px ${bubble.border.style} ${bubble.border.color}`;
-        
-        // 内边距
-        mesBlock.style.padding = `${bubble.padding.top}px ${bubble.padding.right}px ${bubble.padding.bottom}px ${bubble.padding.left}px`;
+        footer.appendChild(preview);
+        return footer;
+    }
 
-        // 圆角
-        mesBlock.style.borderRadius = bubble.shape === 'round' ? '10px' : 
-                                    bubble.shape === 'custom' ? bubble.customBorderRadius : '0';
+    makeDraggable(panel, handle) {
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
 
-        // 应用文本样式
-        const text = styleConfig.text.data;
-        
-        // 主要文本颜色
-        mesText.style.color = text.mainColor;
+        handle.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            offsetX = e.clientX - panel.offsetLeft;
+            offsetY = e.clientY - panel.offsetTop;
 
-        // 斜体文本颜色
-        mesText.querySelectorAll('em, i').forEach(em => {
-            em.style.color = text.italicColor;
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
         });
 
-        // 引用文本样式
-        mesText.querySelectorAll('q').forEach(q => {
-            q.style.color = text.quoteColor;
-            if (text.quoteEffect.enabled) {
-                q.style.textShadow = `0 0 ${text.quoteEffect.radius}px ${text.quoteEffect.glowColor}`;
-            } else {
-                q.style.textShadow = 'none';
+        const onMouseMove = (e) => {
+            if (isDragging) {
+                panel.style.left = `${e.clientX - offsetX}px`;
+                panel.style.top = `${e.clientY - offsetY}px`;
             }
-        });
-    }
+        };
 
-    applyStylesToChat() {
-        try {
-            if (!this.settings.enabled) return;
-
-            document.querySelectorAll('.mes').forEach(messageElement => {
-                const style = this.getStyleForMessage(messageElement);
-                this.applyStyleToMessage(messageElement, style);
-            });
-        } catch (error) {
-            console.error('ChatStylist: Failed to apply styles:', error);
-        }
-    }
-
-    saveCharacterStyle(characterId, style) {
-        if (!(style instanceof StyleConfig)) {
-            throw new Error('Invalid style configuration');
-        }
-
-        this.settings.setCharacterStyle(characterId, style);
-        this.settings.save();
-        
-        this.applyStylesToChat();
-        this.eventManager.emit(EventTypes.STYLE_APPLIED, {
-            characterId,
-            style
-        });
-    }
-
-    resetStyles() {
-        this.settings.reset();
-        this.settings.save();
-        this.applyStylesToChat();
-        this.eventManager.emit(EventTypes.STYLE_RESET);
-    }
-
-    exportStyles() {
-        return {
-            defaultStyle: this.settings.getDefaultStyle().toJSON(),
-            userStyle: this.settings.getUserStyle().toJSON(),
-            systemStyle: this.settings.getSystemStyle().toJSON(),
-            characterStyles: Object.fromEntries(
-                Object.entries(this.settings.settings.characterStyles)
-                    .map(([id, style]) => [id, new StyleConfig(style).toJSON()])
-            )
+        const onMouseUp = () => {
+            isDragging = false;
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
         };
     }
 
-    importStyles(data) {
-        try {
-            if (!data) throw new Error('No data to import');
-
-            // 验证并转换数据
-            const styles = {
-                defaultStyle: new StyleConfig(data.defaultStyle),
-                userStyle: data.userStyle ? new StyleConfig(data.userStyle) : null,
-                systemStyle: data.systemStyle ? new StyleConfig(data.systemStyle) : null,
-                characterStyles: {}
+    handleStyleChange(type, change) {
+        if (type === "bubble") {
+            this.currentStyle.bubble = {
+                ...this.currentStyle.bubble,
+                ...change,
             };
+        } else if (type === "text") {
+            this.currentStyle.text = {
+                ...this.currentStyle.text,
+                ...change,
+            };
+        }
+        this.updatePreview();
+    }
 
-            // 处理角色样式
-            if (data.characterStyles) {
-                for (const [id, style] of Object.entries(data.characterStyles)) {
-                    styles.characterStyles[id] = new StyleConfig(style);
-                }
-            }
+    handleTabChange(tabId) {
+        this.updatePreview();
+    }
 
-            // 更新设置
-            this.settings.settings.defaultStyle = styles.defaultStyle.toJSON();
-            this.settings.settings.userStyle = styles.userStyle?.toJSON() || null;
-            this.settings.settings.systemStyle = styles.systemStyle?.toJSON() || null;
-            this.settings.settings.characterStyles = Object.fromEntries(
-                Object.entries(styles.characterStyles)
-                    .map(([id, style]) => [id, style.toJSON()])
-            );
+    handleSave() {
+        this.options.onSave && this.options.onSave(this.currentStyle);
+    }
 
-            // 保存并应用更改
-            this.settings.save();
-            this.applyStylesToChat();
-            this.eventManager.emit(EventTypes.STYLE_CHANGED, styles);
+    reset() {
+        this.options.onReset && this.options.onReset();
+    }
 
-            return true;
-        } catch (error) {
-            console.error('Failed to import styles:', error);
-            return false;
+    handleMinimize() {
+        const content = this.element.querySelector(".editor-footer");
+        content.style.display = content.style.display === "none" ? "block" : "none";
+    }
+
+    handleClose() {
+        this.options.onClose && this.options.onClose();
+        this.element.remove();
+    }
+
+    updatePreview() {
+        const previewBubble = this.element.querySelector(".preview-bubble");
+        if (!previewBubble) return;
+
+        // Update preview styles
+        const { bubble, text } = this.currentStyle;
+
+        if (bubble.background.type === "solid") {
+            previewBubble.style.backgroundColor = bubble.background.color;
+            previewBubble.style.opacity = bubble.background.opacity;
+        } else {
+            // TODO: update gradient preview
+        }
+
+        previewBubble.style.color = text.mainColor;
+    }
+
+    show() {
+        if (!this.element) {
+            document.body.appendChild(this.createElement());
+        }
+        this.element.classList.add("show");
+    }
+
+    hide() {
+        if (this.element) {
+            this.element.classList.remove("show");
         }
     }
 }
