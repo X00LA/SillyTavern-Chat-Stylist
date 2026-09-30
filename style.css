@@ -1,21 +1,21 @@
-/* 组件样式 */
+/* Component styles */
 @import './ui/styles/components/colorPicker.css';
 @import './ui/styles/components/stylePanel.css';
 @import './ui/styles/components/tabControl.css';
 
-/* 编辑器样式 */
+/* Editor styles */
 @import './ui/styles/editor/layout.css';
 @import './ui/styles/editor/controls.css';
 @import './ui/styles/editor/preview.css';
 
-/* 悬浮面板主容器 */
+/* Floating panel main container */
 .chat-stylist-editor {
     position: fixed;
     top: 50%;
     left: 50%;
     width: 360px;
-    height: 50vh; /* 高度设置为显示屏高度的 50% */
-    max-height: 90vh; /* 防止高度超出浏览器窗口 */
+    height: 50vh; /* 50% of viewport height */
+    max-height: 90vh; /* Prevent exceeding window height */
     background: var(--SmartThemeBlurTintColor);
     backdrop-filter: blur(var(--SmartThemeBlurStrength));
     border: 1px solid var(--SmartThemeBorderColor);
@@ -25,15 +25,15 @@
     display: none;
     flex-direction: column;
     gap: 10px;
-    overflow: hidden; /* 防止内容溢出 */
+    overflow: hidden; /* Prevent overflow */
 }
 
-/* 显示面板 */
+/* Show panel */
 .chat-stylist-editor.show {
     display: flex;
 }
 
-/* 标签页按钮 */
+/* Tab buttons */
 .tab-buttons {
     display: flex;
     justify-content: space-between;
@@ -55,28 +55,28 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* 标签页内容 */
+/* Tab content */
 .tab-content-container {
     flex: 1;
-    overflow-y: auto; /* 启用垂直滚动条 */
+    overflow-y: auto; /* enable vertical scrollbar */
     padding: 10px;
     border-radius: 8px;
     background: rgba(0, 0, 0, 0.05);
-    scrollbar-width: thin; /* 窄滚动条 */
-    scrollbar-color: rgba(0, 0, 0, 0.3) transparent; /* 滚动条样式 */
+    scrollbar-width: thin; /* thin scrollbar */
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent; /* scrollbar style */
 }
 
 .tab-content-container::-webkit-scrollbar {
-    width: 6px; /* 滚动条宽度 */
+    width: 6px; /* scrollbar width */
 }
 
 .tab-content-container::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.3); /* 滚动条颜色 */
+    background-color: rgba(0, 0, 0, 0.3); /* scrollbar color */
     border-radius: 3px;
 }
 
 .tab-content-container::-webkit-scrollbar-track {
-    background: transparent; /* 滑轨透明 */
+    background: transparent; /* transparent track */
 }
 
 .tab-content {
@@ -87,7 +87,7 @@
     display: block;
 }
 
-/* 全局样式 */
+/* Global styles */
 .chat-stylist-controls {
     display: flex;
     align-items: center;
@@ -123,7 +123,7 @@
     user-select: none;
 }
 
-/* 拖动条鼠标悬停效果 */
+/* Drag bar hover */
 .drag-bar:hover {
     background: rgba(0, 0, 0, 0.3);
 }
@@ -139,7 +139,7 @@
     border-bottom-right-radius: 10px;
 }
 
-/* 辅助类 */
+/* Utility classes */
 .hidden {
     display: none !important;
 }
