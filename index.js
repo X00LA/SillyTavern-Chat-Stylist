@@ -4,25 +4,20 @@ if (typeof jQuery === 'undefined') {
     throw new Error('jQuery is required for Chat Stylist extension');
 }
 
-import './ui/i18n/en.js';
+import { registerLocales } from './ui/i18n/index.js';
 import { Settings } from "./core/Settings.js";
 import { StyleManager } from "./core/StyleManager.js";
-import { EventManager } from "./core/EventManager.js";
 import { StylePanel } from "./ui/StylePanel.js";
-import { TabControl } from './ui/components/TabControl.js';
-import { BubblePanel } from './ui/panels/BubblePanel.js';
-import { TextPanel } from './ui/panels/TextPanel.js';
+import { StyleConfig } from "./models/StyleConfig.js";
+
+const { t } = SillyTavern.getContext();
 
 class ChatStylist {
     constructor() {
         try {
-            this.MODULE_NAME = 'chat_stylist';
-            if (!window.extension_settings) {
-                window.extension_settings = {};
-            }
-            this.settings = this.initSettings();
-            this.styleManager = this.initStyleManager();
-            
+            this.settings = new Settings();
+            this.styleManager = new StyleManager(this.settings);
+
             // Initialize UI directly
             this.initialize();
             console.debug('ChatStylist: Initialized successfully');
@@ -32,32 +27,12 @@ class ChatStylist {
         }
     }
 
-    initSettings() {
-        const defaultSettings = {
-            enabled: true,
-            styles: {},
-            themeStyles: {},
-            chatStyles: {}
-        };
-
-        if (!window.extension_settings[this.MODULE_NAME]) {
-            window.extension_settings[this.MODULE_NAME] = defaultSettings;
-        }
-        return window.extension_settings[this.MODULE_NAME];
-    }
-
-    initStyleManager() {
-        const styleSheet = document.createElement('style');
-        styleSheet.id = 'chat-stylist-styles';
-        document.head.appendChild(styleSheet);
-        return styleSheet;
-    }
-
     initialize() {
         console.debug('ChatStylist: Initializing...');
         try {
             this.addSettingsUI();
-            this.bindEvents();
+            // The styles are a stylesheet, so they also cover messages rendered later
+            this.styleManager.applyStylesToChat();
             console.debug('ChatStylist: Initialization complete');
         } catch (error) {
             console.error('ChatStylist: Initialization failed', error);
@@ -76,16 +51,16 @@ addSettingsUI() {
                     <div class="chat-stylist-controls">
                         <button id="chat-stylist-editor" class="menu_button">
                             <i class="fa-solid fa-palette"></i>
-                            <span>Style Editor</span>
+                            <span>${t`Style Editor`}</span>
                         </button>
                         <div class="flex-container">
-                            <button id="chat-stylist-import" class="menu_button" title="Import styles">
+                            <button id="chat-stylist-import" class="menu_button" title="${t`Import styles`}">
                                 <i class="fa-solid fa-file-import"></i>
                             </button>
-                            <button id="chat-stylist-export" class="menu_button" title="Export styles">
+                            <button id="chat-stylist-export" class="menu_button" title="${t`Export styles`}">
                                 <i class="fa-solid fa-file-export"></i>
                             </button>
-                            <button id="chat-stylist-reset" class="menu_button" title="Reset styles">
+                            <button id="chat-stylist-reset" class="menu_button" title="${t`Reset styles`}">
                                 <i class="fa-solid fa-rotate-left"></i>
                             </button>
                         </div>
@@ -106,7 +81,7 @@ addSettingsUI() {
     $('#chat-stylist-import').on('click', () => this.importStyles());
     $('#chat-stylist-export').on('click', () => this.exportStyles());
     $('#chat-stylist-reset').on('click', () => {
-        if (confirm('Are you sure you want to reset all style settings?')) {
+        if (confirm(t`Are you sure you want to reset all style settings?`)) {
             this.resetStyles();
         }
     });
@@ -126,67 +101,21 @@ addSettingsUI() {
         });
 
         $('#chat-stylist-reset').on('click', () => {
-            if (confirm('Are you sure you want to reset all style settings?')) {
+            if (confirm(t`Are you sure you want to reset all style settings?`)) {
                 this.resetStyles();
             }
         });
     }
 
-    bindEvents() {
-        const waitForEventSource = async () => {
-            for (let i = 0; i < 20; i++) {
-                if (window.eventSource) {
-                    window.eventSource.on('chatChanged', () => {
-                        console.debug('ChatStylist: Chat changed');
-                        this.applyStylesToChat();
-                    });
-
-                    window.eventSource.on('settingsUpdated', () => {
-                        this.applyStylesToChat();
-                    });
-                    
-                    console.debug('ChatStylist: Successfully bound to eventSource');
-                    return;
-                }
-                
-                if (i === 0) {
-                    console.warn('ChatStylist: Waiting for eventSource...');
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            
-            console.error('ChatStylist: eventSource not available after 20 seconds');
-        };
-
-        // Start waiting after 2 seconds
-        setTimeout(() => {
-            waitForEventSource();
-        }, 2000);
-    }
-
-    applyStylesToChat() {
-        try {
-            if (!this.settings.enabled) return;
-
-            let styles = '';
-            // apply styles logic
-            if (this.styleManager && this.styleManager.textContent !== undefined) {
-                this.styleManager.textContent = styles;
-            }
-        } catch (error) {
-            console.error('ChatStylist: Failed to apply styles:', error);
-        }
-    }
-
     showStyleEditor() {
-        if (!this.styleEditor) {
-            this.styleEditor = new StylePanel({
-                onSave: (style) => this.saveStyles(style),
-                onReset: () => this.resetStyles(),
-                onClose: () => this.styleEditor.hide(),
-            });
-        }
+        if (this.styleEditor?.popup) return;
+
+        // Build a fresh editor for every opening, the popup discards its content when closed
+        this.styleEditor = new StylePanel({
+            initialStyle: this.settings.getDefaultStyle().toJSON(),
+            onSave: (style) => this.saveStyles(style),
+            onReset: () => this.resetStyles(),
+        });
         this.styleEditor.show();
     }
 
@@ -266,18 +195,20 @@ makeResizable(element, resizeHandle) {
         console.log('Export clicked');
     }
 
+    saveStyles(style) {
+        this.styleManager.saveDefaultStyle(new StyleConfig(style));
+        toastr.success(t`Style saved`);
+    }
+
     resetStyles() {
-        this.settings = this.initSettings();
-        this.applyStylesToChat();
-        if (window.saveSettingsDebounced) {
-            window.saveSettingsDebounced();
-        }
+        this.styleManager.resetStyles();
     }
 }
 
 // Initialize the extension
 jQuery(async () => {
     try {
+        registerLocales();
         window.chatStylist = new ChatStylist();
     } catch (error) {
         console.error('Failed to initialize Chat Stylist:', error);

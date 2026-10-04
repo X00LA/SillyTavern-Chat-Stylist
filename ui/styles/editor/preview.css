@@ -1,4 +1,4 @@
-/* 预览区容器 */
+/* Preview area container */
 .editor-preview {
     background: rgba(0,0,0,0.1);
     border-radius: 6px;
@@ -10,10 +10,24 @@
     justify-content: flex-start;
 }
 
+/* Theme colors by default, so the preview stays readable in light and dark themes */
 .preview-bubble {
     max-width: 80%;
     padding: 15px 20px;
-    background: white;
+    background: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
     border-radius: 10px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--SmartThemeBorderColor);
+}
+
+.preview-bubble em {
+    color: var(--SmartThemeEmColor);
+}
+
+.preview-bubble u {
+    color: var(--SmartThemeUnderlineColor);
+}
+
+.preview-bubble q {
+    color: var(--SmartThemeQuoteColor);
 }

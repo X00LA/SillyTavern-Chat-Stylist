@@ -8,31 +8,6 @@
 @import './ui/styles/editor/controls.css';
 @import './ui/styles/editor/preview.css';
 
-/* Floating panel main container */
-.chat-stylist-editor {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 360px;
-    height: 50vh; /* 50% of viewport height */
-    max-height: 90vh; /* Prevent exceeding window height */
-    background: var(--SmartThemeBlurTintColor);
-    backdrop-filter: blur(var(--SmartThemeBlurStrength));
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 10px;
-    padding: 10px;
-    z-index: 10000;
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    overflow: hidden; /* Prevent overflow */
-}
-
-/* Show panel */
-.chat-stylist-editor.show {
-    display: flex;
-}
-
 /* Tab buttons */
 .tab-buttons {
     display: flex;

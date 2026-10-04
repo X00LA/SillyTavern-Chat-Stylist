@@ -5,6 +5,8 @@ import { BubblePanel } from "../panels/BubblePanel.js";
 import { TextPanel } from "../panels/TextPanel.js";
 import { TabControl } from "./TabControl.js";
 
+const { t } = SillyTavern.getContext();
+
 export class StylePanel {
     constructor(options = {}) {
         this.options = {
@@ -23,41 +25,41 @@ export class StylePanel {
     createElement() {
         const panel = DOMUtils.createElement('div', 'chat-stylist-editor');
 
-        // 角色选择部分
+        // Character selection
         const characterSelect = this.createCharacterSelect();
         panel.appendChild(characterSelect);
 
-        // 创建标签页控制器
+        // Create tab control
         this.tabControl = new TabControl({
             tabs: [
-                {id: 'bubble', label: '气泡样式', icon: 'fa-solid fa-message'},
-                {id: 'text', label: '文本样式', icon: 'fa-solid fa-font'}
+                {id: 'bubble', label: t`Bubble Style`, icon: 'fa-solid fa-message'},
+                {id: 'text', label: t`Text Style`, icon: 'fa-solid fa-font'}
             ],
             onTabChanged: (tabId) => this.handleTabChange(tabId)
         });
         panel.appendChild(this.tabControl.createElement());
 
-        // 创建气泡样式面板
+        // Create bubble style panel
         this.bubblePanel = new BubblePanel({
             initialStyle: this.currentStyle.bubble,
             onChange: (change) => this.handleStyleChange('bubble', change)
         });
 
-        // 创建文本样式面板
+        // Create text style panel
         this.textPanel = new TextPanel({
             initialStyle: this.currentStyle.text,
             onChange: (change) => this.handleStyleChange('text', change)
         });
 
-        // 添加面板内容
+        // Add panel content
         this.tabControl.setTabContent('bubble', this.bubblePanel.createElement());
         this.tabControl.setTabContent('text', this.textPanel.createElement());
 
-        // 底部预览和按钮
+        // Footer with preview and buttons
         const footer = this.createFooter();
         panel.appendChild(footer);
 
-        // 添加拖动功能
+        // Add drag functionality
         this.makeDraggable(panel);
 
         this.element = panel;
@@ -69,23 +71,23 @@ export class StylePanel {
 
         const select = DOMUtils.createElement('select', 'character-select');
         select.innerHTML = `
-            <option value="default">默认样式</option>
-            <option value="user">用户样式</option>
-            <option value="system">系统样式</option>
-            <optgroup label="角色样式" id="characterStyleOptions">
+            <option value="default">${t`Default style`}</option>
+            <option value="user">${t`User style`}</option>
+            <option value="system">${t`System style`}</option>
+            <optgroup label="${t`Character styles`}" id="characterStyleOptions">
             </optgroup>
         `;
 
-        // 工具按钮组
+        // Tool button group
         const toolButtons = DOMUtils.createElement('div', 'tool-buttons');
         toolButtons.innerHTML = `
-            <button title="导入样式" class="tool-button">
+            <button title="${t`Import styles`}" class="tool-button">
                 <i class="fa-solid fa-file-import"></i>
             </button>
-            <button title="导出样式" class="tool-button">
+            <button title="${t`Export styles`}" class="tool-button">
                 <i class="fa-solid fa-file-export"></i>
             </button>
-            <button title="保存为模板" class="tool-button">
+            <button title="${t`Save as template`}" class="tool-button">
                 <i class="fa-solid fa-save"></i>
             </button>
         `;
@@ -97,27 +99,27 @@ export class StylePanel {
     createFooter() {
         const footer = DOMUtils.createElement('div', 'editor-footer');
 
-        // 预览区域
+        // Preview area
         const preview = DOMUtils.createElement('div', 'style-preview');
         preview.innerHTML = `
             <div class="preview-message">
                 <div class="preview-bubble">
-                    这是预览文本
-                    <em>这是斜体文本</em>
-                    <q>这是引用文本</q>
+                    ${t`This is preview text`}
+                    <em>${t`This is italic text`}</em>
+                    <q>${t`This is quoted text`}</q>
                 </div>
             </div>
         `;
 
-        // 操作按钮
+        // Action buttons
         const actions = DOMUtils.createElement('div', 'editor-actions');
         actions.innerHTML = `
-            <button class="action-button cancel">取消</button>
-            <button class="action-button apply">应用</button>
-            <button class="action-button save primary">保存</button>
+            <button class="action-button cancel">${t`Cancel`}</button>
+            <button class="action-button apply">${t`Apply`}</button>
+            <button class="action-button save primary">${t`Save`}</button>
         `;
 
-        // 绑定事件
+        // Bind events
         actions.querySelector('.cancel').addEventListener('click', () => this.handleClose());
         actions.querySelector('.apply').addEventListener('click', () => this.handleApply());
         actions.querySelector('.save').addEventListener('click', () => this.handleSave());
@@ -170,7 +172,7 @@ export class StylePanel {
         document.addEventListener('mouseup', dragEnd);
     }
 
-    // 事件处理方法
+    // Event handlers
     handleTabChange(tabId) {
         this.updatePreview();
     }
@@ -198,7 +200,7 @@ export class StylePanel {
 
     handleApply() {
         this.updatePreview();
-        // 临时应用样式但不保存
+        // Apply the style temporarily without saving it
     }
 
     handleSave() {
@@ -219,22 +221,22 @@ export class StylePanel {
         const previewBubble = this.element.querySelector('.preview-bubble');
         if (!previewBubble) return;
 
-        // 应用预览样式
+        // Apply preview style
         const { bubble, text } = style;
 
-        // 气泡样式
+        // Bubble style
         if (bubble.background.type === 'solid') {
             previewBubble.style.background = bubble.background.color;
             previewBubble.style.opacity = bubble.background.opacity;
         } else {
-            // 渐变背景
+            // Gradient background
             // ...
         }
 
         previewBubble.style.border = `${bubble.border.width}px ${bubble.border.style} ${bubble.border.color}`;
         previewBubble.style.padding = `${bubble.padding.top}px ${bubble.padding.right}px ${bubble.padding.bottom}px ${bubble.padding.left}px`;
 
-        // 文本样式
+        // Text style
         previewBubble.style.color = text.mainColor;
         
         const italicText = previewBubble.querySelector('em');

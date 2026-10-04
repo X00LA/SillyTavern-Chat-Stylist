@@ -1,4 +1,4 @@
-/* 头部操作按钮 */
+/* Header action buttons */
 .header-actions {
     display: flex;
     gap: 8px;
@@ -19,7 +19,7 @@
     background: rgba(255,255,255,0.1);
 }
 
-/* 角色选择器 */
+/* Character selector */
 .character-select {
     display: flex;
     gap: 8px;

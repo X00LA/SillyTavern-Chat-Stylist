@@ -1,34 +1,38 @@
-/* 编辑器主容器 */
+/* Main editor container (content of a SillyTavern popup) */
 .chat-stylist-editor {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    background: var(--SmartThemeBlurTintColor);
-    backdrop-filter: blur(var(--SmartThemeBlurStrength));
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 10px;
-    padding: 15px;
-    z-index: 10000;
-    display: none;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.chat-stylist-editor.show {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Fixed height, so the tab content scrolls while header and preview stay visible */
+    height: min(75dvh, 720px);
 }
 
-/* 编辑器头部 */
+/* Editor header */
 .editor-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+    /* Keep the buttons clear of the popup's close button in the top right corner */
+    padding-right: 20px;
 }
 
-/* 编辑器内容区 */
+/* Tab area takes the remaining height */
+.chat-stylist-editor .tab-container {
+    flex: 1;
+    min-height: 0;
+}
+
+.chat-stylist-editor .tab-content-container {
+    min-height: 0;
+}
+
+/* Preview stays pinned below the tabs */
+.chat-stylist-editor .editor-footer {
+    flex-shrink: 0;
+}
+
+/* Editor content area */
 .editor-content {
     flex: 1;
     overflow-y: auto;

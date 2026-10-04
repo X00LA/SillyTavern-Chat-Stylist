@@ -2,6 +2,11 @@ import { DOMUtils } from "../../utils/DOMUtils.js";
 import { StylePanel } from "../StylePanel.js";
 import { ColorPicker } from "../components/ColorPicker.js";
 
+const { t } = SillyTavern.getContext();
+
+// Reads a color of the active SillyTavern theme, e.g. '--SmartThemeUnderlineColor'
+const getThemeColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
 export class TextPanel {
     constructor(options = {}) {
         this.options = {
@@ -16,15 +21,33 @@ export class TextPanel {
     createElement() {
         const container = DOMUtils.createElement('div', 'text-panel');
 
-        // 主要文本样式
+        // Main text style
         const mainTextSection = this.createMainTextSection();
         container.appendChild(mainTextSection);
 
-        // 斜体文本样式
+        // Italic text style
         const italicTextSection = this.createItalicTextSection();
         container.appendChild(italicTextSection);
 
-        // 引用文本样式
+        // Bold text style (**text**), without own color it uses the main text color like in SillyTavern
+        const boldTextSection = this.createColorSection(
+            t`Bold text`,
+            t`Bold color`,
+            'boldTextColor',
+            this.options.initialStyle.boldColor || this.options.initialStyle.mainColor || '#000000'
+        );
+        container.appendChild(boldTextSection);
+
+        // Underlined text style (__text__), without own color it uses the theme's underline color
+        const underlineTextSection = this.createColorSection(
+            t`Underlined text`,
+            t`Underline color`,
+            'underlineTextColor',
+            this.options.initialStyle.underlineColor || getThemeColor('--SmartThemeUnderlineColor') || '#000000'
+        );
+        container.appendChild(underlineTextSection);
+
+        // Quoted text style
         const quoteTextSection = this.createQuoteTextSection();
         container.appendChild(quoteTextSection);
 
@@ -34,15 +57,15 @@ export class TextPanel {
 
     createMainTextSection() {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 标题
+
+        // Title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '主要文本';
+        title.textContent = t`Main text`;
         section.appendChild(title);
 
-        // 颜色选择器
+        // Color picker
         const colorPicker = new ColorPicker({
-            label: '文本颜色',
+            label: t`Text color`,
             initialColor: this.options.initialStyle.mainColor || '#000000',
             onChange: (color) => {
                 if(this.options.onChange) {
@@ -61,15 +84,15 @@ export class TextPanel {
 
     createItalicTextSection() {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 标题
+
+        // Title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '斜体文本';
+        title.textContent = t`Italic text`;
         section.appendChild(title);
 
-        // 颜色选择器
+        // Color picker
         const colorPicker = new ColorPicker({
-            label: '斜体颜色',
+            label: t`Italic color`,
             initialColor: this.options.initialStyle.italicColor || '#666666',
             onChange: (color) => {
                 if(this.options.onChange) {
@@ -86,20 +109,48 @@ export class TextPanel {
         return section;
     }
 
-    createQuoteTextSection() {
+    // Section with a title and a single color picker
+    createColorSection(titleText, label, pickerKey, initialColor) {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 标题
+
+        // Title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '引用文本';
+        title.textContent = titleText;
         section.appendChild(title);
 
-        // 引用文本样式容器
+        // Color picker
+        const colorPicker = new ColorPicker({
+            label,
+            initialColor,
+            onChange: (color) => {
+                if(this.options.onChange) {
+                    this.options.onChange({
+                        type: pickerKey,
+                        value: { color }
+                    });
+                }
+            }
+        });
+        this.colorPickers.set(pickerKey, colorPicker);
+        section.appendChild(colorPicker.createElement());
+
+        return section;
+    }
+
+    createQuoteTextSection() {
+        const section = DOMUtils.createElement('div', 'style-section');
+
+        // Title
+        const title = DOMUtils.createElement('h3', 'section-title');
+        title.textContent = t`Quoted text`;
+        section.appendChild(title);
+
+        // Quoted text controls container
         const quoteControls = DOMUtils.createElement('div', 'quote-controls');
 
-        // 颜色选择器
+        // Color picker
         const colorPicker = new ColorPicker({
-            label: '引用颜色',
+            label: t`Quote color`,
             initialColor: this.options.initialStyle.quoteColor || '#3388ff',
             onChange: (color) => {
                 if(this.options.onChange) {
@@ -113,34 +164,33 @@ export class TextPanel {
         this.colorPickers.set('quoteTextColor', colorPicker);
         quoteControls.appendChild(colorPicker.createElement());
 
-        // 荧光效果控制
+        // Glow effect controls
         const glowControls = DOMUtils.createElement('div', 'glow-effect-controls');
-        
-        // 启用开关
+
+        // Enable toggle
         const glowToggle = DOMUtils.createElement('label', 'checkbox-label');
         glowToggle.innerHTML = `
-            <input type="checkbox" 
+            <input type="checkbox"
                    ${this.options.initialStyle.quoteEffect?.enabled ? 'checked' : ''}/>
-            <span>启用荧光效果</span>
+            <span>${t`Enable glow effect`}</span>
         `;
         glowControls.appendChild(glowToggle);
 
-        // 荧光颜色和强度控制
+        // Glow color and intensity controls
         const glowOptions = DOMUtils.createElement('div', 'glow-options');
-        glowOptions.style.display = this.options.initialStyle.quoteEffect?.enabled ? 'block' : 'none';
+        glowOptions.style.display = this.options.initialStyle.quoteEffect?.enabled ? '' : 'none';
 
-        // 荧光颜色
+        // Glow color
         const glowColorPicker = new ColorPicker({
-            label: '荧光颜色',
+            label: t`Glow color`,
             initialColor: this.options.initialStyle.quoteEffect?.glowColor || '#3388ff',
-            showAlpha: true,
             onChange: (color) => {
                 if(this.options.onChange) {
                     this.options.onChange({
                         type: 'quoteGlow',
-                        value: { 
+                        value: {
                             enabled: true,
-                            color: color 
+                            color: color
                         }
                     });
                 }
@@ -149,13 +199,13 @@ export class TextPanel {
         this.colorPickers.set('quoteGlowColor', glowColorPicker);
         glowOptions.appendChild(glowColorPicker.createElement());
 
-        // 荧光强度
+        // Glow intensity
         const glowIntensity = DOMUtils.createElement('div', 'glow-intensity');
         glowIntensity.innerHTML = `
-            <label>荧光强度</label>
+            <label>${t`Glow intensity`}</label>
             <div class="slider-container">
-                <input type="range" 
-                       min="1" max="20" 
+                <input type="range"
+                       min="1" max="20"
                        value="${this.options.initialStyle.quoteEffect?.radius || 2}" />
                 <span class="slider-value">
                     ${this.options.initialStyle.quoteEffect?.radius || 2}px
@@ -167,9 +217,9 @@ export class TextPanel {
         glowControls.appendChild(glowOptions);
         quoteControls.appendChild(glowControls);
 
-        // 绑定事件
+        // Bind events
         glowToggle.querySelector('input').addEventListener('change', (e) => {
-            glowOptions.style.display = e.target.checked ? 'block' : 'none';
+            glowOptions.style.display = e.target.checked ? '' : 'none';
             if(this.options.onChange) {
                 this.options.onChange({
                     type: 'quoteGlow',
@@ -204,6 +254,8 @@ export class TextPanel {
         return {
             mainColor: this.colorPickers.get('mainTextColor').getValue(),
             italicColor: this.colorPickers.get('italicTextColor').getValue(),
+            boldColor: this.colorPickers.get('boldTextColor').getValue(),
+            underlineColor: this.colorPickers.get('underlineTextColor').getValue(),
             quoteColor: this.colorPickers.get('quoteTextColor').getValue(),
             quoteEffect: {
                 enabled: this.element.querySelector('.glow-effect-controls input[type="checkbox"]').checked,

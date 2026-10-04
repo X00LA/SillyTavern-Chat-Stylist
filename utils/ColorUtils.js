@@ -6,6 +6,13 @@ export class ColorUtils {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
+    /**
+     * Returns a CSS color. Hex colors get the opacity applied, other formats (e.g. rgba from the color picker) already carry their alpha.
+     */
+    static toCssColor(color, opacity = 1) {
+        return /^#[0-9a-f]{6}$/i.test(color) ? this.hexToRgba(color, opacity) : color;
+    }
+
     static rgbaToHex(rgba) {
         const parts = rgba.match(/[\d.]+/g);
         if (!parts || parts.length < 3) return '#000000';

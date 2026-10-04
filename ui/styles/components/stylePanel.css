@@ -1,14 +1,46 @@
-/* 样式面板布局 */
+/* Style panel layout */
 .style-panel {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
+/* Sections of a tab, clearly separated from each other */
+.bubble-panel,
+.text-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .style-section {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.section-title {
+    margin: 0;
+}
+
+/* Rows inside a section */
+.border-controls,
+.gradient-controls,
+.quote-controls,
+.glow-effect-controls,
+.glow-options,
+.glow-intensity {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Checkbox and its text on one line */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
 }
 
 .style-controls {
@@ -18,7 +50,7 @@
     align-items: center;
 }
 
-/* 面板控件样式 */
+/* Panel control styles */
 .style-select {
     background: rgba(0,0,0,0.2);
     border: 1px solid var(--SmartThemeBorderColor);
@@ -39,11 +71,30 @@
 .padding-controls {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px 11px;
+}
+
+/* Label and field side by side */
+.padding-input,
+.border-width-control,
+.gradient-angle-control,
+.slider-container {
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
-.padding-input {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+/* Same label width in both columns, so the padding fields line up */
+.padding-input label {
+    min-width: 4.5em;
+}
+
+.slider-container input[type="range"] {
+    flex: 1;
+}
+
+/* Fixed width, so the slider does not jump when the value gets longer */
+.slider-value {
+    min-width: 3em;
+    text-align: right;
 }

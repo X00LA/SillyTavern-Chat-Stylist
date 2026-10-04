@@ -1,22 +1,21 @@
 import { StyleConfig } from "../models/StyleConfig.js";
 
+const { extensionSettings, saveSettingsDebounced } = SillyTavern.getContext();
+
 export class Settings {
     constructor() {
         this.defaultSettings = {
             enabled: true,
-            defaultStyle: StyleConfig.createDefault().toJSON(),
+            defaultStyle: null, // null = no custom style, the chat keeps the theme's look
             userStyle: null,
             systemStyle: null,
             characterStyles: {},
             templates: {}
         };
 
-        // 初始化设置
-        if (!window.extension_settings) {
-            window.extension_settings = {};
-        }
-        this.settings = window.extension_settings.chat_stylist || this.defaultSettings;
-        window.extension_settings.chat_stylist = this.settings;
+        // Initialize settings (stored in SillyTavern's extension settings)
+        this.settings = extensionSettings.chat_stylist || structuredClone(this.defaultSettings);
+        extensionSettings.chat_stylist = this.settings;
     }
 
     get enabled() {
@@ -27,8 +26,14 @@ export class Settings {
         this.settings.enabled = value;
     }
 
+    hasCustomStyle() {
+        return !!this.settings.defaultStyle;
+    }
+
     getDefaultStyle() {
-        return new StyleConfig(this.settings.defaultStyle);
+        return this.settings.defaultStyle
+            ? new StyleConfig(this.settings.defaultStyle)
+            : StyleConfig.createDefault();
     }
 
     setDefaultStyle(style) {
@@ -61,13 +66,11 @@ export class Settings {
 
     reset() {
         this.settings = structuredClone(this.defaultSettings);
-        window.extension_settings.chat_stylist = this.settings;
+        extensionSettings.chat_stylist = this.settings;
     }
 
     save() {
-        window.extension_settings.chat_stylist = this.settings;
-        if (window.saveSettingsDebounced) {
-            window.saveSettingsDebounced();
-        }
+        extensionSettings.chat_stylist = this.settings;
+        saveSettingsDebounced();
     }
 }

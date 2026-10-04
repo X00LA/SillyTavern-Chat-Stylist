@@ -47,6 +47,8 @@ export class TextStyle extends BaseStyle {
         return {
             mainColor: '#000000',
             italicColor: '#666666',
+            boldColor: null, // null = keep the main text color
+            underlineColor: null, // null = keep the theme's underline color
             quoteColor: '#3388ff',
             quoteEffect: {
                 enabled: false,

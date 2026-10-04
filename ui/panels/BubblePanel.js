@@ -2,6 +2,8 @@ import { DOMUtils } from "../../utils/DOMUtils.js";
 import { StylePanel } from "../StylePanel.js";
 import { ColorPicker } from "../components/ColorPicker.js";
 
+const { t } = SillyTavern.getContext();
+
 export class BubblePanel {
     constructor(options = {}) {
         this.options = {
@@ -16,15 +18,15 @@ export class BubblePanel {
     createElement() {
         const container = DOMUtils.createElement('div', 'bubble-panel');
 
-        // 背景样式区域
+        // Background section
         const backgroundSection = this.createBackgroundSection();
         container.appendChild(backgroundSection);
 
-        // 边框样式区域
+        // Border section
         const borderSection = this.createBorderSection();
         container.appendChild(borderSection);
 
-        // 内边距区域
+        // Padding section
         const paddingSection = this.createPaddingSection();
         container.appendChild(paddingSection);
 
@@ -34,25 +36,26 @@ export class BubblePanel {
 
     createBackgroundSection() {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 添加标题
+
+        // Add title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '背景样式';
+        title.textContent = t`Background`;
         section.appendChild(title);
 
-        // 背景类型选择
-        const typeSelect = DOMUtils.createElement('select', 'style-select');
+        // Background type selection
+        const typeSelect = DOMUtils.createElement('select', 'style-select background-type');
         typeSelect.innerHTML = `
-            <option value="solid">纯色</option>
-            <option value="gradient">渐变</option>
+            <option value="solid">${t`Solid color`}</option>
+            <option value="gradient">${t`Gradient`}</option>
         `;
+        typeSelect.value = this.options.initialStyle.background?.type || 'solid';
+        typeSelect.addEventListener('change', () => this.notifyChange('background', { type: typeSelect.value }));
         section.appendChild(typeSelect);
 
-        // 纯色选择器
+        // Solid color picker
         const solidColorPicker = new ColorPicker({
-            label: '背景颜色',
+            label: t`Background color`,
             initialColor: this.options.initialStyle.background?.color || '#ffffff',
-            showAlpha: true,
             onChange: (color) => {
                 if(this.options.onChange) {
                     this.options.onChange({
@@ -66,25 +69,63 @@ export class BubblePanel {
             }
         });
         this.colorPickers.set('backgroundColor', solidColorPicker);
-        section.appendChild(solidColorPicker.createElement());
+        const solidControls = solidColorPicker.createElement();
+        section.appendChild(solidControls);
+
+        // Gradient controls (linear gradient from start to end color)
+        const gradient = this.options.initialStyle.background?.gradient || {};
+        const gradientControls = DOMUtils.createElement('div', 'gradient-controls');
+        const gradientColors = [
+            {key: 'gradientStart', label: t`Start color`, color: gradient.colors?.[0] || '#ffffff'},
+            {key: 'gradientEnd', label: t`End color`, color: gradient.colors?.[1] || '#f0f0f0'}
+        ];
+        gradientColors.forEach(({key, label, color}) => {
+            const picker = new ColorPicker({
+                label,
+                initialColor: color,
+                onChange: (value) => this.notifyChange('background', { [key]: value })
+            });
+            this.colorPickers.set(key, picker);
+            gradientControls.appendChild(picker.createElement());
+        });
+
+        const angleControl = DOMUtils.createElement('div', 'gradient-angle-control');
+        angleControl.innerHTML = `
+            <label>${t`Angle`}</label>
+            <input type="number" class="style-input" min="0" max="360" value="${gradient.angle ?? 90}" />
+            <span>°</span>
+        `;
+        const angleInput = angleControl.querySelector('input');
+        angleInput.addEventListener('input', () => this.notifyChange('background', { angle: parseInt(angleInput.value) }));
+        gradientControls.appendChild(angleControl);
+        section.appendChild(gradientControls);
+
+        // Only show the controls of the selected background type
+        const updateVisibility = () => {
+            const isGradient = typeSelect.value === 'gradient';
+            solidControls.classList.toggle('hidden', isGradient);
+            gradientControls.classList.toggle('hidden', !isGradient);
+        };
+        typeSelect.addEventListener('change', updateVisibility);
+        updateVisibility();
 
         return section;
     }
 
     createBorderSection() {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 添加标题
+
+        // Add title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '边框样式';
+        title.textContent = t`Border`;
         section.appendChild(title);
 
-        // 边框控制器容器
+        // Border controls container
         const borderControls = DOMUtils.createElement('div', 'border-controls');
 
-        // 边框颜色
+        // Border color
         const colorPicker = new ColorPicker({
-            label: '边框颜色',
+            label: t`Border color`,
             initialColor: this.options.initialStyle.border?.color || '#e0e0e0',
             onChange: (color) => {
                 if(this.options.onChange) {
@@ -100,21 +141,25 @@ export class BubblePanel {
         this.colorPickers.set('borderColor', colorPicker);
         borderControls.appendChild(colorPicker.createElement());
 
-        // 边框宽度
+        // Border width
         const widthControl = DOMUtils.createElement('div', 'border-width-control');
         widthControl.innerHTML = `
-            <label>宽度</label>
-            <input type="number" min="0" max="10" value="${this.options.initialStyle.border?.width || 1}" />
+            <label>${t`Border width`}</label>
+            <input type="number" class="style-input" min="0" max="10" value="${this.options.initialStyle.border?.width ?? 1}" />
         `;
+        const widthInput = widthControl.querySelector('input');
+        widthInput.addEventListener('input', () => this.notifyChange('border', { width: parseInt(widthInput.value) }));
         borderControls.appendChild(widthControl);
 
-        // 边框样式
-        const styleSelect = DOMUtils.createElement('select', 'style-select');
+        // Border style
+        const styleSelect = DOMUtils.createElement('select', 'style-select border-style');
         styleSelect.innerHTML = `
-            <option value="solid">实线</option>
-            <option value="dashed">虚线</option>
-            <option value="dotted">点线</option>
+            <option value="solid">${t`Solid`}</option>
+            <option value="dashed">${t`Dashed`}</option>
+            <option value="dotted">${t`Dotted`}</option>
         `;
+        styleSelect.value = this.options.initialStyle.border?.style || 'solid';
+        styleSelect.addEventListener('change', () => this.notifyChange('border', { style: styleSelect.value }));
         borderControls.appendChild(styleSelect);
 
         section.appendChild(borderControls);
@@ -123,31 +168,35 @@ export class BubblePanel {
 
     createPaddingSection() {
         const section = DOMUtils.createElement('div', 'style-section');
-        
-        // 添加标题
+
+        // Add title
         const title = DOMUtils.createElement('h3', 'section-title');
-        title.textContent = '内边距';
+        title.textContent = t`Padding`;
         section.appendChild(title);
 
-        // 内边距控制器
+        // Padding controls
         const paddingControls = DOMUtils.createElement('div', 'padding-controls');
-        
-        // 四个方向的内边距输入
+
+        // Padding inputs for all four sides
         const directions = [
-            {name: 'top', label: '上'},
-            {name: 'right', label: '右'},
-            {name: 'bottom', label: '下'},
-            {name: 'left', label: '左'}
+            {name: 'top', label: t`Top`},
+            {name: 'right', label: t`Right`},
+            {name: 'bottom', label: t`Bottom`},
+            {name: 'left', label: t`Left`}
         ];
 
         directions.forEach(dir => {
             const control = DOMUtils.createElement('div', 'padding-input');
             control.innerHTML = `
                 <label>${dir.label}</label>
-                <input type="number" 
-                       min="0" 
-                       value="${this.options.initialStyle.padding?.[dir.name] || 15}" />
+                <input type="number"
+                       class="style-input"
+                       data-side="${dir.name}"
+                       min="0"
+                       value="${this.options.initialStyle.padding?.[dir.name] ?? 15}" />
             `;
+            const input = control.querySelector('input');
+            input.addEventListener('input', () => this.notifyChange('padding', { [dir.name]: parseInt(input.value) }));
             paddingControls.appendChild(control);
         });
 
@@ -155,25 +204,43 @@ export class BubblePanel {
         return section;
     }
 
+    notifyChange(type, value) {
+        if(this.options.onChange) {
+            this.options.onChange({ type, value });
+        }
+    }
+
     getCurrentStyle() {
         if(!this.element) return null;
 
+        // Empty number fields count as 0
+        const readNumber = (selector) => parseInt(this.element.querySelector(selector).value) || 0;
+
         return {
             background: {
-                type: this.element.querySelector('.style-select').value,
+                // Keep values without controls (e.g. opacity, gradient positions)
+                ...this.options.initialStyle.background,
+                type: this.element.querySelector('.background-type').value,
                 color: this.colorPickers.get('backgroundColor').getValue(),
-                opacity: 1.0 // 从颜色值中提取
+                gradient: {
+                    ...this.options.initialStyle.background?.gradient,
+                    colors: [
+                        this.colorPickers.get('gradientStart').getValue(),
+                        this.colorPickers.get('gradientEnd').getValue()
+                    ],
+                    angle: readNumber('.gradient-angle-control input')
+                }
             },
             border: {
                 color: this.colorPickers.get('borderColor').getValue(),
-                width: parseInt(this.element.querySelector('.border-width-control input').value),
-                style: this.element.querySelector('.style-select').value
+                width: readNumber('.border-width-control input'),
+                style: this.element.querySelector('.border-style').value
             },
             padding: {
-                top: parseInt(this.element.querySelector('.padding-controls input:nth-child(1)').value),
-                right: parseInt(this.element.querySelector('.padding-controls input:nth-child(2)').value),
-                bottom: parseInt(this.element.querySelector('.padding-controls input:nth-child(3)').value),
-                left: parseInt(this.element.querySelector('.padding-controls input:nth-child(4)').value)
+                top: readNumber('input[data-side="top"]'),
+                right: readNumber('input[data-side="right"]'),
+                bottom: readNumber('input[data-side="bottom"]'),
+                left: readNumber('input[data-side="left"]')
             }
         };
     }

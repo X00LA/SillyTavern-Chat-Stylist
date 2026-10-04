@@ -15,7 +15,7 @@ export class TabControl {
 createElement() {
     const container = DOMUtils.createElement('div', 'tab-container');
 
-    // 创建标签按钮
+    // Create tab buttons
     const buttonsContainer = DOMUtils.createElement('div', 'tab-buttons');
     this.options.tabs.forEach(tab => {
         const button = DOMUtils.createElement('button', 'tab-button');
@@ -36,11 +36,11 @@ createElement() {
         buttonsContainer.appendChild(button);
     });
 
-    // 创建内容容器
+    // Create content containers
     const contentContainer = DOMUtils.createElement('div', 'tab-content-container');
     this.options.tabs.forEach(tab => {
         const content = DOMUtils.createElement('div', 'tab-content');
-        content.dataset.tabId = tab.id; // 确保设置了 data-tab-id 属性
+        content.dataset.tabId = tab.id; // Make sure the data-tab-id attribute is set
         if (tab.id === this.activeTab) {
             content.classList.add('active');
         }
@@ -90,10 +90,10 @@ createElement() {
             return;
         }
 
-        // 清空现有内容
+        // Clear existing content
         container.innerHTML = '';
 
-        // 添加新内容
+        // Add new content
         if (typeof content === 'string') {
             container.innerHTML = content;
         } else if (content instanceof Node) {

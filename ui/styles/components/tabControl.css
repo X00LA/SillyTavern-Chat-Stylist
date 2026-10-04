@@ -1,11 +1,11 @@
-/* 标签页容器 */
+/* Tab container */
 .tab-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/* 标签按钮组 */
+/* Tab button group */
 .tab-buttons {
     display: flex;
     gap: 8px;
@@ -20,6 +20,7 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
     border-radius: 4px;
 }
@@ -34,7 +35,7 @@
     background: rgba(255,255,255,0.15);
 }
 
-/* 标签内容 */
+/* Tab content */
 .tab-content {
     display: none;
     padding: 10px;
